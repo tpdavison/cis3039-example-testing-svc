@@ -1,48 +1,57 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { listProducts } from './list-products';
-import { FakeProductRepo } from '../infra/fake-product-repo';
 import { Product } from '../domain/product';
+import { ProductRepo } from '../domain/product-repo';
 
 describe('listProducts', () => {
-  it('should return empty array when no products exist', async () => {
-    // Arrange
-    const productRepo = new FakeProductRepo();
+  describe('successful scenarios', () => {
+    it('should return empty array when no products exist', async () => {
+      const mockRepo: ProductRepo = {
+        list: vi.fn().mockResolvedValue([]),
+        getById: vi.fn(),
+        save: vi.fn(),
+        delete: vi.fn(),
+      };
 
-    // Act
-    const result = await listProducts({ productRepo });
+      const result = await listProducts({ productRepo: mockRepo });
 
-    // Assert
-    expect(result.success).toBe(true);
-    expect(result.data).toEqual([]);
-  });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+      expect(mockRepo.list).toHaveBeenCalledOnce();
+    });
 
-  it('should return all products from the repository', async () => {
-    // Arrange
-    const products: Product[] = [
-      {
-        id: 'prod-1',
-        name: 'Product 1',
-        pricePence: 1000,
-        description: 'First product',
-        updatedAt: new Date('2025-01-01'),
-      },
-      {
-        id: 'prod-2',
-        name: 'Product 2',
-        pricePence: 2000,
-        description: 'Second product',
-        updatedAt: new Date('2025-01-02'),
-      },
-    ];
-    const productRepo = new FakeProductRepo(products);
+    it('should return all products from the repository', async () => {
+      const products: Product[] = [
+        {
+          id: 'prod-1',
+          name: 'Product 1',
+          pricePence: 1000,
+          description: 'First product',
+          updatedAt: new Date('2025-01-01'),
+        },
+        {
+          id: 'prod-2',
+          name: 'Product 2',
+          pricePence: 2000,
+          description: 'Second product',
+          updatedAt: new Date('2025-01-02'),
+        },
+      ];
 
-    // Act
-    const result = await listProducts({ productRepo });
+      const mockRepo: ProductRepo = {
+        list: vi.fn().mockResolvedValue(products),
+        getById: vi.fn(),
+        save: vi.fn(),
+        delete: vi.fn(),
+      };
 
-    // Assert
-    expect(result.success).toBe(true);
-    expect(result.data).toHaveLength(2);
-    expect(result.data).toEqual(products);
+      const result = await listProducts({ productRepo: mockRepo });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(products);
+      expect(result.data).toHaveLength(2);
+      expect(mockRepo.list).toHaveBeenCalledOnce();
+    });
   });
 
   describe('error scenarios', () => {
